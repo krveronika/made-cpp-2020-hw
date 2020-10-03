@@ -81,16 +81,22 @@ const long long operator*(const std::vector<int> &v1, const std::vector<int> &v2
     long long res;
 }
 
-bool operator||(const std::vector<double> &v1, const std::vector<double> &v2)
+bool operator%(const std::vector<double> &v1, const std::vector<double> &v2)
 {
-    // my code
-    return true;
+    std::vector<double> res;
+    res.push_back(v1[1] * v2[2] - v1[2] * v2[1]);
+    res.push_back(v1[2] * v2[0] - v1[0] * v2[2]);
+    res.push_back(v1[0] * v2[1] - v1[1] * v2[0]);
+    return res;
 }
 
-bool operator||(const std::vector<int> &v1, const std::vector<int> &v2)
+bool operator%(const std::vector<int> &v1, const std::vector<int> &v2)
 {
-    // my code
-    return true;
+    std::vector<long long> res;
+    res.push_back(v1[1] * v2[2] - v1[2] * v2[1]);
+    res.push_back(v1[2] * v2[0] - v1[0] * v2[2]);
+    res.push_back(v1[0] * v2[1] - v1[1] * v2[0]);
+    return res;
 }
 
 
