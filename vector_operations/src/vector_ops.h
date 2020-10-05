@@ -8,7 +8,7 @@ namespace task {
 
 // Your code here...
 
-const double EPS = 1e-7;
+const double EPS_TASK = 1e-7;
 const std::vector<double> operator+(const std::vector<double> &v1, const std::vector<double> &v2)
 {
     std::vector<double> res;
@@ -123,7 +123,7 @@ bool operator||(const std::vector<double> &v1, const std::vector<double> &v2)
                 allNull = false;
                 k = v1[i] / v2[i];
             }
-            if (fabs(k - v1[i] / v2[i]) > EPS)
+            if (fabs(k - v1[i] / v2[i]) > EPS_TASK)
                 return isCollinear;
         }
     }
@@ -152,7 +152,7 @@ bool operator||(const std::vector<int> &v1, const std::vector<int> &v2)
                 allNull = false;
                 k = v1[i] / double(v2[i]);
             }
-            else if (fabs(k - v1[i] / v2[i]) > EPS)
+            else if (fabs(k - v1[i] / v2[i]) > EPS_TASK)
                 return isCollinear;
         }
     }
@@ -200,13 +200,13 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &v)
 }
 
 template < typename T >
-std::istream& operator>>(std::istream& is, const std::vector<T> &v)
+std::istream& operator>>(std::istream& is, std::vector<T> &v)
 {
     v.clear();
-    int s;
-    is >> s;
+    int size;
+    is >> size;
     T temp;
-    for (int i = 0; i < v.size(); ++i)
+    for (int i = 0; i < size; ++i)
     {
         is >> temp;
         v.push_back(temp);
@@ -215,7 +215,7 @@ std::istream& operator>>(std::istream& is, const std::vector<T> &v)
 }
 
 template <typename T>
-void reverse(const std::vector<T> &v)
+void reverse(std::vector<T> &v)
 {
     typename std::vector<T>::iterator first = v.begin();
     typename std::vector<T>::iterator last = v.end();
