@@ -61,9 +61,9 @@ public:
     // Your code goes here...
     ~Matrix();
     
-//    friend Matrix operator*(const double& a, const Matrix& b);
+    friend Matrix operator*(const double& a, const Matrix& b);
     friend std::ostream& operator<<(std::ostream& output, const Matrix& matrix);
-//    friend std::istream& operator>>(std::istream& input, Matrix& matrix);
+    friend std::istream& operator>>(std::istream& input, Matrix& matrix);
 
 private:
     size_t m_rows;
@@ -71,30 +71,8 @@ private:
     double **m;
 };
     
-//Matrix operator*(const double& a, const Matrix& b)
-//{
-//    b.m_column;
-//    return Matrix();
-//}
-//
-std::ostream& operator<<(std::ostream& output, const Matrix& matrix)
-{
-//    for(size_t i = 0; i < matrix.m_rows; ++i)
-//        for(size_t j = 0; j < matrix.m_column; ++j)
-//            output << matrix.m[i][j] << " ";
-    output << "asdasda";
-    return output;
-}
-//
-//std::istream& operator>>(std::istream& input, Matrix& matrix)
-//{
-//    size_t row, col;
-//    input >> row >> col;
-//    matrix = Matrix(row, col);
-//    for(size_t i = 0; i < matrix.m_rows; ++i)
-//        for(size_t j = 0; j < matrix.m_column; ++j)
-//            input >> matrix.m[i][j];
-//    return input;
-//}
+Matrix operator*(const double& a, const Matrix& b);
+std::ostream& operator<<(std::ostream& output, const Matrix& matrix);
+std::istream& operator>>(std::istream& input, Matrix& matrix);
     
 }  // namespace task

@@ -220,24 +220,33 @@ std::vector<double> Matrix::getColumn(size_t column){std::vector<double> t; retu
 bool Matrix::operator==(const Matrix& a) const{return true;}
 bool Matrix::operator!=(const Matrix& a) const{return true;}
 
-//Matrix operator*(const double& a, const Matrix& b)
-//{
-//    return Matrix();
-//}
+Matrix task::operator*(const double& a, const Matrix& b)
+{
+    return Matrix();
+}
 
 
-//std::ostream& operator<<(std::ostream& output, const Matrix& matrix)
-//{
-//    for(size_t i = 0; i < matrix.m_rows; ++i)
-//    {
-//        for(size_t j = 0; j < matrix.m_column; ++j)
-//            output << *(matrix.m[i]+j);
-//        output << std::endl;
-//    }
-//    return output;
-//}
+std::ostream& task::operator<<(std::ostream& output, const Matrix& matrix)
+{
+    for(size_t i = 0; i < matrix.m_rows; ++i)
+    {
+        for(size_t j = 0; j < matrix.m_column; ++j)
+            output << matrix.m[i][j] << " ";//*(matrix.m[i]+j);
+        output << std::endl;
+    }
+    return output;
+}
 
-
+std::istream& task::operator>>(std::istream& input, Matrix& matrix)
+{
+    size_t row, col;
+    input >> row >> col;
+    matrix = Matrix(row, col);
+    for(size_t i = 0; i < matrix.m_rows; ++i)
+        for(size_t j = 0; j < matrix.m_column; ++j)
+            input >> matrix.m[i][j];
+    return input;
+}
 
 Matrix::~Matrix()
 {
