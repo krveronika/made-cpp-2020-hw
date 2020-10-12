@@ -28,20 +28,26 @@ Matrix::Matrix(size_t rows, size_t cols)
 
 Matrix::Matrix(const Matrix& copy)
 {
-    m_rows = copy.m_rows;
-    m_column = copy.m_column;
-    m = new double * [m_rows];
-    for (size_t i = 0; i < m_rows; ++i)
-        m[i] = new double[m_column]();
-    for (size_t i = 0; i < m_rows; ++i)
-        for (size_t j = 0; j < m_column; ++j)
-                m[i][j] = copy.m[i][j];
+    this->m_rows = copy.m_rows;
+    this->m_column = copy.m_column;
+    this->m = new double * [copy.m_rows];
+    for (size_t i = 0; i < copy.m_rows; ++i)
+        this->m[i] = new double[ copy.m_column]();
+    for (size_t i = 0; i < copy.m_rows; ++i)
+        for (size_t j = 0; j < copy.m_column; ++j)
+                this->m[i][j] = copy.m[i][j];
 }
 
 Matrix& Matrix::operator=(const Matrix& a)
 {
-    Matrix tmp(a);
-    std::swap(tmp,*this);
+    if (&a != this)
+    {
+        Matrix temp(a);
+        std::swap(m, temp.m);
+        std::swap(m_rows, temp.m_rows);
+        std::swap(m_column, temp.m_column);
+    }
+    
     return *this;
 }
 
@@ -209,16 +215,73 @@ Matrix Matrix::operator+() const
     return *this;
 }
 
-double Matrix::det() const{return 0;}
-void Matrix::transpose(){}
-Matrix Matrix::transposed() const{return *this;}
-double Matrix::trace() const{return 0;}
+double Matrix::det() const
+{
+    // для устойчивости надо разложение LU делать, но посчитаю по определению
+    if (m_rows != m_column)
+        throw SizeMismatchException();
+    return 0;
+}
 
-std::vector<double> Matrix::getRow(size_t row){std::vector<double> t; return t;}
-std::vector<double> Matrix::getColumn(size_t column){std::vector<double> t; return t;}
+void Matrix::transpose()
+{
+    Matrix res(m_column, m_rows);
+    for(size_t i = 0; i < m_rows; ++i)
+        for(size_t j = 0; j < m_column; ++j)
+            res[j][i] = m[i][j];
+    *this = res;
+}
 
-bool Matrix::operator==(const Matrix& a) const{return true;}
-bool Matrix::operator!=(const Matrix& a) const{return true;}
+Matrix Matrix::transposed() const
+{
+    Matrix res(m_column, m_rows);
+    for(size_t i = 0; i < m_rows; ++i)
+        for(size_t j = 0; j < m_column; ++j)
+            res[j][i] = m[i][j];
+    return res;
+}
+
+double Matrix::trace() const
+{
+    if (m_rows != m_column)
+        throw SizeMismatchException();
+    double t = 0;
+    for (size_t i = 0; i < m_rows; ++i)
+        t += m[i][i];
+    return t;
+}
+
+std::vector<double> Matrix::getRow(size_t row)
+{
+    std::vector<double> t;
+    for (int j = 0; j < m_column; ++j)
+        t.push_back(m[row][j]);
+    return t;
+    
+}
+std::vector<double> Matrix::getColumn(size_t column)
+{
+    std::vector<double> t;
+    for (int i = 0; i < m_rows; ++i)
+        t.push_back(m[i][column]);
+    return t;
+}
+
+bool Matrix::operator==(const Matrix& a) const
+{
+    if ((m_rows != a.m_rows) or (m_column != a.m_column))
+        return false;
+    for(size_t i = 0; i < m_rows; ++i)
+        for(size_t j = 0; j < m_column; ++j)
+            if (m[i][j] != a.m[i][j])
+                return false;
+    return true;
+}
+
+bool Matrix::operator!=(const Matrix& a) const
+{
+    return !(*this == a);
+}
 
 Matrix task::operator*(const double& a, const Matrix& b)
 {
