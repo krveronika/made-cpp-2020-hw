@@ -53,21 +53,21 @@ Matrix& Matrix::operator=(const Matrix& a)
 
 double& Matrix::get(size_t row, size_t col)
 {
-    if ((m_rows < row) or (m_column < col))
+    if ((m_rows < row+1) or (m_column < col+1))
         throw OutOfBoundsException();
     return m[row][col];
 }
 
 double& Matrix::get(size_t row, size_t col) const
 {
-    if ((m_rows < row) or (m_column < col))
+    if ((m_rows < row+1) or (m_column < col+1))
         throw OutOfBoundsException();
     return m[row][col];
 }
 
 void Matrix::set(size_t row, size_t col, const double& value)
 {
-    if ((m_rows < row) or (m_column < col))
+    if ((m_rows < row+1) or (m_column < col+1))
         throw OutOfBoundsException();
     m[row][col] = value;
 }
@@ -84,19 +84,45 @@ double *Matrix::operator[] (size_t row) const
 
 void Matrix::resize(size_t new_rows, size_t new_cols)
 {
-    //pass
+    if (new_rows <= 0 || new_cols <= 0)
+        throw SizeMismatchException();
+    
+    if ( m_rows == new_rows && m_column == new_cols )
+        return;
+    
     Matrix cur(new_rows, new_cols);
+    
     size_t k = 0;
     size_t l = 0;
     
-    
-//    for (size_t i = 0; i < new_rows; ++i)
-//    {
-//        for (size_t j = 0; j < new_cols; ++j)
-//        {
-//            
-//        }
-//    }
+    for (size_t i = 0; i < new_rows; ++i)
+    {
+        for (size_t j = 0; j < new_cols; ++j)
+        {
+            if (k < m_rows)
+            {
+                if (l < m_column)
+                {
+                    cur[i][j] = m[k][l];
+                    l++;
+                }
+                else
+                {
+                    if (++k < m_rows)
+                    {
+                        l = 0;
+                        cur[i][j] = m[k][l];
+                        l++;
+                    }
+                    else
+                        cur[i][j] = 0;
+                }
+            }
+            else
+                cur[i][j] = 0;
+        }
+    }
+    *this = cur;
 }
 
 Matrix& Matrix::operator+=(const Matrix& a)
@@ -104,7 +130,7 @@ Matrix& Matrix::operator+=(const Matrix& a)
     if ((m_column != a.m_column) or (m_rows != a.m_rows))
         throw SizeMismatchException();
     for (size_t i = 0; i < m_rows; ++i)
-        for (size_t j = 0; j < m_rows; ++j)
+        for (size_t j = 0; j < m_column; ++j)
             m[i][j] += a.m[i][j];
     return *this;
 }
@@ -114,7 +140,7 @@ Matrix& Matrix::operator-=(const Matrix& a)
     if ((m_column != a.m_column) or (m_rows != a.m_rows))
         throw SizeMismatchException();
     for (size_t i = 0; i < m_rows; ++i)
-        for (size_t j = 0; j < m_rows; ++j)
+        for (size_t j = 0; j < m_column; ++j)
             m[i][j] -= a.m[i][j];
     return *this;
 }
@@ -159,7 +185,6 @@ Matrix Matrix::operator+(const Matrix& a) const
     for(size_t i = 0; i < m_rows; ++i)
         for(size_t j = 0; j < m_column; ++j)
             res.m[i][j] = m[i][j] + a.m[i][j];
-
     return res;
 }
 
@@ -204,10 +229,11 @@ Matrix Matrix::operator*(const double& a) const
 
 Matrix Matrix::operator-() const
 {
+    Matrix res(*this);
     for(size_t i = 0; i < m_rows; ++i)
         for(size_t j = 0; j < m_column; ++j)
-            m[i][j] = -m[i][j];
-    return *this;
+            res[i][j] = -m[i][j];
+    return res;
 }
 
 Matrix Matrix::operator+() const
@@ -273,7 +299,7 @@ bool Matrix::operator==(const Matrix& a) const
         return false;
     for(size_t i = 0; i < m_rows; ++i)
         for(size_t j = 0; j < m_column; ++j)
-            if (m[i][j] != a.m[i][j])
+            if (std::fabs(m[i][j] - a.m[i][j]) > EPS) // !=
                 return false;
     return true;
 }
@@ -285,7 +311,11 @@ bool Matrix::operator!=(const Matrix& a) const
 
 Matrix task::operator*(const double& a, const Matrix& b)
 {
-    return Matrix();
+    Matrix res = Matrix(b);
+    for(size_t i = 0; i < res.m_rows; ++i)
+        for(size_t j = 0; j < res.m_column; ++j)
+            res.m[i][j] = b.m[i][j] * a;
+    return res;
 }
 
 
@@ -294,7 +324,7 @@ std::ostream& task::operator<<(std::ostream& output, const Matrix& matrix)
     for(size_t i = 0; i < matrix.m_rows; ++i)
     {
         for(size_t j = 0; j < matrix.m_column; ++j)
-            output << matrix.m[i][j] << " ";//*(matrix.m[i]+j);
+            output << matrix.m[i][j] << " "; //*(matrix.m[i]+j);
         output << std::endl;
     }
     return output;
