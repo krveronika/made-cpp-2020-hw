@@ -243,10 +243,71 @@ Matrix Matrix::operator+() const
 
 double Matrix::det() const
 {
-    // для устойчивости надо разложение LU делать, но посчитаю по определению
+    // для устойчивости надо разложение LU делать...
+    /*
+     A = LU => det(A) = det(L)*det(U)
+     Ax=y => LUx = y => Ux = b, Lb = y
+     */
     if (m_rows != m_column)
         throw SizeMismatchException();
-    return 0;
+    
+    size_t n = m_rows;
+    
+    double **L = new double * [n];
+    double **U = new double * [n];
+    for (size_t i = 0; i < n; ++i)
+    {
+        L[i] = new double[n]();
+        U[i] = new double[n]();
+    }
+    
+    // init
+    for (size_t i = 0; i < n; ++i)
+    {
+        U [i][i] = 1;
+        L[i][0] = m[i][0];
+        U[0][i] = m[0][i] / L[0][0];
+    }
+    
+    double sum = 0;
+    // find L and U
+    for (size_t i = 1; i < n; ++i)
+    {
+        for (size_t j = 1; j < n; ++j)
+        {
+            if (i >= j) //нижний треугольник
+            {
+                sum = 0;
+                for (int k = 0; k < j; k++)
+                    sum += L [i][k] * U [k][j];
+                L[i][j] = m[i][j] - sum;
+            }
+            else // верхний треугольник
+            {
+                sum = 0;
+                for (int k = 0; k < i; k++)
+                    sum += L[i][k] * U[k][j];
+                U[i][j] = (m[i][j] - sum) / L[i][i];
+            }
+        }
+    }
+    //---
+    
+    double detL = 1;
+    double detU = 1;
+    for (size_t i = 0; i < n; ++i)
+    {
+        detL *= L[i][i];
+        detU *= U[i][i];
+    }
+    for(size_t i = 0; i < n; ++i)
+    {
+        delete L[i];
+        delete U[i];
+    }
+    delete[] L;
+    delete[] U;
+    return detL*detU;
 }
 
 void Matrix::transpose()
