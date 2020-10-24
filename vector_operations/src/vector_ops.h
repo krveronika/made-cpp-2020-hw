@@ -6,8 +6,6 @@
 
 namespace task {
     
-    // Your code here...
-    
     const double EPS_TASK = 1e-7;
     std::vector<double> operator+(const std::vector<double> &v1,
                                   const std::vector<double> &v2) {
@@ -25,9 +23,7 @@ namespace task {
         return res;
     }
     
-    std::vector<double> operator+(const std::vector<double> &v1) {
-        return v1;
-    }
+    std::vector<double> operator+(const std::vector<double> &v1) { return v1; }
     
     std::vector<int> operator+(const std::vector<int> &v1) { return v1; }
     
@@ -61,8 +57,7 @@ namespace task {
         return res;
     }
     
-    double operator*(const std::vector<double> &v1,
-                           const std::vector<double> &v2) {
+    double operator*(const std::vector<double> &v1, const std::vector<double> &v2) {
         double res = 0;
         for (int i = 0; i < v1.size(); ++i)
             res += v1[i] * v2[i];
@@ -187,8 +182,8 @@ namespace task {
     
     template <typename T> void reverse(std::vector<T> &v) {
         int last = v.size() - 1;
-        for (int i = 0; i < v.size()/2; ++i) {
-            std::swap (v[i], v[last]);
+        for (int i = 0; i < v.size() / 2; ++i) {
+            std::swap(v[i], v[last]);
             --last;
         }
     }
@@ -212,3 +207,4 @@ namespace task {
     }
     
 } // namespace task
+
