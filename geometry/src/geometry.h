@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <iterator>
 #include <vector>
 
 const double tolerance = 1e-6;
@@ -112,7 +113,8 @@ public:
             else {
                 // либо параллельны, либо совпали b1=b2 => y1-m2*x1 = b2
                 double b2 = y3 - m2 * x3;
-                return equals(y1 - m2 * x1, b2);
+                return equals(y1 - m2 * x1,
+                              b2); // если хотим разделить параллельные и совпадающие
             }
         }
     }
@@ -145,6 +147,18 @@ public:
 Shape::~Shape(){};
 
 class Polygon : public Shape {
+private:
+    // ориентированная площадь
+    double signed_area() const {
+        double a = 0.0;
+        const size_t size = verticesCount();
+        for (size_t i = 0; i < size; ++i) {
+            size_t j = (i + 1) % size;
+            a += 0.5 * (vertex[i].x * vertex[j].y - vertex[j].x * vertex[i].y);
+        }
+        return a;
+    }
+    
 protected:
     std::vector<Point> vertex;
     
@@ -159,7 +173,7 @@ public:
     
     virtual double perimeter() const override {
         double p = 0;
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         for (size_t i = 0; i < size; ++i) {
             size_t j = (i + 1) % size;
             p += distance(vertex[i], vertex[j]);
@@ -168,12 +182,7 @@ public:
     }
     
     virtual double area() const override {
-        double a = 0.0;
-        size_t size = verticesCount();
-        for (size_t i = 0; i < size; ++i) {
-            size_t j = (i + 1) % size;
-            a += 0.5 * (vertex[i].x * vertex[j].y - vertex[j].x * vertex[i].y);
-        }
+        double a = signed_area();
         if (a < 0) {
             a = -a;
         }
@@ -183,7 +192,7 @@ public:
     
     virtual bool operator==(const Shape &another) const override {
         const Polygon *poly = dynamic_cast<const Polygon *>(&another);
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         if (poly->verticesCount() != size)
             return false;
         else if (!equals(poly->perimeter(), perimeter()))
@@ -191,45 +200,80 @@ public:
         else if (!equals(poly->area(), area()))
             return false;
         else {
-            bool isStart = false;
-            size_t j = 0;
+            // полигоны равны, если равны соответствующие стороны и углы
+            std::vector<double> length(size);
+            std::vector<double> angle(size);
+            std::vector<double> length_another(size);
+            std::vector<double> angle_another(size);
+            bool same_orientation = (signed_area() * poly->signed_area() > 0);
+            double dotproduct, crossproduct;
             for (size_t i = 0; i < size; ++i) {
-                if (vertex[i] == poly->vertex[0]) {
-                    isStart = true;
-                    j = i;
-                    if (size == 1)
-                        return true;
-                    break;
-                }
+                size_t j = (i + 1) % size;
+                length[i] = distance(vertex[i], vertex[j]);
+                length_another[i] = distance(poly->vertex[i], poly->vertex[j]);
+                
+                dotproduct = vertex[i].x * vertex[j].y - vertex[j].x * vertex[i].y;
+                crossproduct = vertex[i].x * vertex[j].x + vertex[i].y * vertex[j].y;
+                angle[i] = M_PI + atan2(dotproduct, crossproduct);
+                
+                dotproduct = poly->vertex[i].x * poly->vertex[j].y -
+                poly->vertex[j].x * poly->vertex[i].y;
+                crossproduct = poly->vertex[i].x * poly->vertex[j].x +
+                poly->vertex[i].y * poly->vertex[j].y;
+                if (same_orientation)
+                    angle_another[i] = M_PI + atan2(dotproduct, crossproduct);
+                else
+                    angle_another[i] = M_PI - atan2(dotproduct, crossproduct);
             }
+            if (!same_orientation) {
+                std::reverse(length_another.begin(), length_another.end());
+                std::reverse(angle_another.begin(), angle_another.end());
+            }
+            // конкатенация
+            std::copy(length_another.begin(), length_another.end(),
+                      std::back_inserter(length_another));
+            std::copy(angle_another.begin(), angle_another.end(),
+                      std::back_inserter(angle_another));
             
-            if (isStart) {
-                // прямой ход
-                if (poly->vertex[1] == vertex[(j + 1) % size]) {
-                    for (size_t i = 2; i < size; ++i) {
-                        if (poly->vertex[i] != vertex[(j + i) % size])
-                            return false;
-                    }
-                    return true;
+            std::vector<double>::iterator position = length_another.begin();
+            
+            while (position != length_another.end()) {
+                position =
+                std::find_if(position, length_another.end(), [=](double d) -> bool {
+                    return equals(d, length[0]);
+                });
+                if (position == length_another.end()) {
+                    return false;
                 }
-                // обратный ход
-                else if (poly->vertex.back() == vertex[(j + 1) % size]) {
-                    for (size_t i = size - 2; i != 0; --i) {
-                        if (poly->vertex[i] != vertex[(size - i + j) % size])
-                            return false;
-                    }
-                    return true;
+                std::pair<std::vector<double>::iterator, std::vector<double>::iterator>
+                pair;
+                pair = std::mismatch(position, length_another.end(), length.begin(),
+                                     equals);
+                
+                if (std::distance(position, pair.first) == size) {
+                    pair =
+                    std::mismatch(angle_another.begin() +
+                                  std::distance(length_another.begin(), position),
+                                  angle_another.end(), angle.begin(), equals);
+                    if (std::distance(angle_another.begin() +
+                                      std::distance(length_another.begin(), position),
+                                      pair.first) == size) {
+                        return true;
+                    } else
+                        return false;
+                } else {
+                    position++;
                 }
             }
         }
-        return true;
+        return false;
     }
     
     virtual void rotate(Point center, double angle) override {
         double cos = std::cos(angle * M_PI / 180);
         double sin = std::sin(angle * M_PI / 180);
         
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         for (size_t i = 0; i < size; ++i) {
             vertex[i] = vertex[i].rotate(center, cos, sin);
         }
@@ -237,7 +281,7 @@ public:
     }
     
     virtual void reflex(Point center) override {
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         for (size_t i = 0; i < size; ++i) {
             vertex[i] = vertex[i].reflex(center);
         }
@@ -245,7 +289,7 @@ public:
     }
     
     virtual void reflex(Line axis) override {
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         for (size_t i = 0; i < size; ++i) {
             vertex[i] = vertex[i].reflex(axis.p1, axis.p2);
         }
@@ -253,7 +297,7 @@ public:
     }
     
     virtual void scale(Point center, double coefficient) override {
-        size_t size = verticesCount();
+        const size_t size = verticesCount();
         for (size_t i = 0; i < size; ++i) {
             vertex[i] = vertex[i].scale(center, coefficient);
         }
@@ -427,7 +471,7 @@ public:
 
 class Square : public Rectangle {
 public:
-    Square(const Point &q1, const Point &q2) { Rectangle::Rectangle(q1, q2, 1); }
+    Square(const Point &q1, const Point &q2) : Rectangle(q1, q2, 1) {}
     
     // описанная
     Circle circumscribedCircle() {
@@ -525,8 +569,7 @@ public:
         return Point(ox, oy);
     }
     
-    //ортоцентр c
-    //https://www.quora.com/What-is-the-orthocentre-of-a-triangle-when-the-vertices-are-x1-y1-x2-y2-x3-y3
+    // https://www.quora.com/What-is-the-orthocentre-of-a-triangle-when-the-vertices-are-x1-y1-x2-y2-x3-y3
     Point orthocenter() const {
         double x1 = vertex[0].x, y1 = vertex[0].y;
         double x2 = vertex[1].x, y2 = vertex[1].y;
@@ -540,7 +583,6 @@ public:
         return Point(x, y);
     }
     
-    //прямая Эйлера
     Line EulerLine() const {
         return Line(Triangle::centroid(), Triangle::orthocenter());
     }
